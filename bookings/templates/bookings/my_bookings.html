@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<h2>My Bookings</h2>
+
+<h5 class="mt-3">Current</h5>
+{% if current %}
+<div class="list-group mb-4">
+  {% for booking in current %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <div class="fw-semibold">{{ booking.travel_option.type }}: {{ booking.travel_option.source }} → {{ booking.travel_option.destination }}</div>
+      <div class="text-muted small">On {{ booking.travel_option.date_time }} | Seats: {{ booking.number_of_seats }} | Total: ₹{{ booking.total_price }}</div>
+    </div>
+    <a class="btn btn-sm btn-outline-danger" href="{% url 'cancel_booking' booking.booking_id %}">Cancel</a>
+  </div>
+  {% endfor %}
+  </div>
+{% else %}
+<div class="alert alert-info">No current bookings.</div>
+{% endif %}
+
+<h5>Past</h5>
+{% if past %}
+<div class="list-group">
+  {% for booking in past %}
+  <div class="list-group-item">
+    <div class="fw-semibold">{{ booking.travel_option.type }}: {{ booking.travel_option.source }} → {{ booking.travel_option.destination }}</div>
+    <div class="text-muted small">On {{ booking.travel_option.date_time }} | Seats: {{ booking.number_of_seats }} | Total: ₹{{ booking.total_price }} | Status: {{ booking.status }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">No past bookings.</div>
+{% endif %}
+{% endblock %}

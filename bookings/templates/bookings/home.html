@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Available Travel Options</h2>
+  <a class="btn btn-outline-secondary" href="{% url 'my_bookings' %}">My Bookings</a>
+  </div>
+
+<form method="get" class="row g-2 mb-4">
+  <div class="col-12 col-md-2">
+    <select name="type" class="form-select">
+      <option value="">All Types</option>
+      <option value="Flight" {% if filters.type == 'Flight' %}selected{% endif %}>Flight</option>
+      <option value="Train" {% if filters.type == 'Train' %}selected{% endif %}>Train</option>
+      <option value="Bus" {% if filters.type == 'Bus' %}selected{% endif %}>Bus</option>
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <input type="text" name="source" value="{{ filters.source }}" placeholder="Source" class="form-control"/>
+  </div>
+  <div class="col-6 col-md-3">
+    <input type="text" name="destination" value="{{ filters.destination }}" placeholder="Destination" class="form-control"/>
+  </div>
+  <div class="col-6 col-md-2">
+    <input type="date" name="date" value="{{ filters.date }}" class="form-control"/>
+  </div>
+  <div class="col-6 col-md-2 d-grid">
+    <button class="btn btn-primary" type="submit">Filter</button>
+  </div>
+</form>
+
+{% if travels %}
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Route</th>
+        <th>Date & Time</th>
+        <th>Price</th>
+        <th>Seats</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for travel in travels %}
+      <tr>
+        <td>{{ travel.type }}</td>
+        <td>{{ travel.source }} → {{ travel.destination }}</td>
+        <td>{{ travel.date_time }}</td>
+        <td>₹{{ travel.price }}</td>
+        <td>{{ travel.available_seats }}</td>
+        <td>
+          <a class="btn btn-sm btn-success" href="{% url 'book_travel' travel.travel_id %}">Book</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">No travel options found.</div>
+{% endif %}
+{% endblock %}

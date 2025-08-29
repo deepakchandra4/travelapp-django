@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Book{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Book {{ travel.type }}: {{ travel.source }} → {{ travel.destination }}</h5>
+    <p class="card-text mb-2">Date: {{ travel.date_time }} | Price: ₹{{ travel.price }} | Seats available: {{ travel.available_seats }}</p>
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-12 col-md-4">
+        <label class="form-label">Seats</label>
+        <input class="form-control" type="number" name="seats" min="1" max="{{ travel.available_seats }}">
+      </div>
+      <div class="col-12 col-md-4 align-self-end">
+        <button class="btn btn-primary" type="submit">Confirm Booking</button>
+        <a class="btn btn-outline-secondary" href="{% url 'home' %}">Back</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

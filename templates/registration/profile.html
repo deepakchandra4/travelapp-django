@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <h3 class="mb-3">Your Profile</h3>
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-6">
+        <label class="form-label">First name</label>
+        <input class="form-control" type="text" name="first_name" value="{{ user.first_name }}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Last name</label>
+        <input class="form-control" type="text" name="last_name" value="{{ user.last_name }}" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" name="email" value="{{ user.email }}" />
+      </div>
+      <div class="col-12 d-grid d-md-block">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-outline-secondary" href="{% url 'home' %}">Back</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
