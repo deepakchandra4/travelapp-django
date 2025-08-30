@@ -1,21 +1,91 @@
 {% extends 'base.html' %}
 {% block title %}Book{% endblock %}
 {% block content %}
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">Book {{ travel.type }}: {{ travel.source }} → {{ travel.destination }}</h5>
-    <p class="card-text mb-2">Date: {{ travel.date_time }} | Price: ₹{{ travel.price }} | Seats available: {{ travel.available_seats }}</p>
-    <form method="post" class="row g-3">
-      {% csrf_token %}
-      <div class="col-12 col-md-4">
-        <label class="form-label">Seats</label>
-        <input class="form-control" type="number" name="seats" min="1" max="{{ travel.available_seats }}">
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-ticket"></i> Book {{ travel.type }}: {{ travel.source }} → {{ travel.destination }}
+        </h5>
       </div>
-      <div class="col-12 col-md-4 align-self-end">
-        <button class="btn btn-primary" type="submit">Confirm Booking</button>
-        <a class="btn btn-outline-secondary" href="{% url 'home' %}">Back</a>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Date & Time:</strong> {{ travel.date_time|date:"M d, Y H:i" }}
+          </div>
+          <div class="col-md-6">
+            <strong>Price per seat:</strong> <span class="text-success fw-bold">₹{{ travel.price }}</span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <strong>Available Seats:</strong> 
+            {% if travel.available_seats > 10 %}
+              <span class="text-success">{{ travel.available_seats }}</span>
+            {% elif travel.available_seats > 5 %}
+              <span class="text-warning">{{ travel.available_seats }}</span>
+            {% else %}
+              <span class="text-danger">{{ travel.available_seats }}</span>
+            {% endif %}
+          </div>
+        </div>
+        
+        {% if travel.available_seats > 0 %}
+        <form method="post" class="row g-3">
+          {% csrf_token %}
+          <div class="col-12 col-md-6">
+            <label class="form-label">Number of Seats</label>
+            <input class="form-control" type="number" name="seats" min="1" max="{{ travel.available_seats }}" required>
+            <div class="form-text">Maximum {{ travel.available_seats }} seats available</div>
+          </div>
+          <div class="col-12">
+            <div id="total-price" class="alert alert-info d-none">
+              <strong>Total Price: ₹<span id="price-amount">0</span></strong>
+            </div>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-success me-2" type="submit">
+              <i class="bi bi-check-circle"></i> Confirm Booking
+            </button>
+            <a class="btn btn-outline-secondary" href="{% url 'home' %}">
+              <i class="bi bi-arrow-left"></i> Back to Options
+            </a>
+          </div>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">
+          <h6>Sorry, no seats available!</h6>
+          <p class="mb-0">This travel option is fully booked.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'home' %}">
+          <i class="bi bi-arrow-left"></i> Back to Options
+        </a>
+        {% endif %}
       </div>
-    </form>
+    </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const seatsInput = document.querySelector('input[name="seats"]');
+    const totalPriceDiv = document.getElementById('total-price');
+    const priceAmount = document.getElementById('price-amount');
+    const pricePerSeat = {{ travel.price }};
+    
+    if (seatsInput) {
+        seatsInput.addEventListener('input', function() {
+            const seats = parseInt(this.value) || 0;
+            if (seats > 0) {
+                const total = seats * pricePerSeat;
+                priceAmount.textContent = total;
+                totalPriceDiv.classList.remove('d-none');
+            } else {
+                totalPriceDiv.classList.add('d-none');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

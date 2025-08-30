@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import TravelOption, Booking
 from django.utils import timezone
+from django.db import models
 
 # Home - List all travel options
 def home(request):
@@ -13,7 +14,9 @@ def home(request):
     source = request.GET.get('source')
     destination = request.GET.get('destination')
     date = request.GET.get('date')
+    search_query = request.GET.get('search')
 
+    # Apply filters
     if travel_type:
         travels = travels.filter(type=travel_type)
     if source:
@@ -22,6 +25,17 @@ def home(request):
         travels = travels.filter(destination__icontains=destination)
     if date:
         travels = travels.filter(date_time__date=date)
+    
+    # Apply search across multiple fields
+    if search_query:
+        travels = travels.filter(
+            models.Q(source__icontains=search_query) |
+            models.Q(destination__icontains=search_query) |
+            models.Q(type__icontains=search_query)
+        )
+
+    # Order by date (earliest first)
+    travels = travels.order_by('date_time')
 
     context = {
         'travels': travels,
@@ -30,6 +44,7 @@ def home(request):
             'source': source or '',
             'destination': destination or '',
             'date': date or '',
+            'search': search_query or '',
         }
     }
     return render(request, 'bookings/home.html', context)
@@ -38,28 +53,44 @@ def home(request):
 @login_required
 def book_travel(request, travel_id):
     travel = get_object_or_404(TravelOption, travel_id=travel_id)
+    
+    # Check if travel is in the past
+    if travel.date_time < timezone.now():
+        messages.error(request, 'Cannot book travel options in the past.')
+        return redirect('home')
+    
     if request.method == "POST":
         try:
             seats = int(request.POST.get('seats', '0'))
         except ValueError:
             seats = 0
+            
+        # Enhanced validation
         if seats < 1:
-            messages.error(request, 'Please enter a valid number of seats.')
+            messages.error(request, 'Please enter a valid number of seats (minimum 1).')
         elif seats > travel.available_seats:
-            messages.error(request, 'Not enough seats available.')
+            messages.error(request, f'Only {travel.available_seats} seats available. Please select fewer seats.')
+        elif seats > 10:  # Reasonable limit
+            messages.error(request, 'Maximum 10 seats can be booked at once.')
         else:
-            total_price = seats * travel.price
-            Booking.objects.create(
-                user=request.user,
-                travel_option=travel,
-                number_of_seats=seats,
-                total_price=total_price,
-                booking_date=timezone.now()
-            )
-            travel.available_seats -= seats
-            travel.save()
-            messages.success(request, 'Booking confirmed!')
-            return redirect('my_bookings')
+            # Double-check availability (in case of concurrent bookings)
+            travel.refresh_from_db()
+            if travel.available_seats >= seats:
+                total_price = seats * travel.price
+                Booking.objects.create(
+                    user=request.user,
+                    travel_option=travel,
+                    number_of_seats=seats,
+                    total_price=total_price,
+                    booking_date=timezone.now()
+                )
+                travel.available_seats -= seats
+                travel.save()
+                messages.success(request, f'Booking confirmed! {seats} seat(s) booked for ₹{total_price}')
+                return redirect('my_bookings')
+            else:
+                messages.error(request, 'Seats no longer available. Please try again.')
+    
     return render(request, 'bookings/book.html', {'travel': travel})
 
 # View bookings
